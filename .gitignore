@@ -1,7 +1,0 @@
-assets/*
-!assets/README.md
-!assets/icon.png
-generated/*
-!generated/rexglue.cmake
-out/*
-*.log

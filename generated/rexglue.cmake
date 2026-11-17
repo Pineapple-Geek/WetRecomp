@@ -68,7 +68,12 @@ endif()
 # cmake_pch.hxx.cxx, which carries none of the source properties above, and
 # clang rejects a PCH whose EH mode disagrees with the TU including it.
 function(rexglue_apply_recomp_settings target_name pch_header)
-    target_precompile_headers(${target_name} PRIVATE "${pch_header}")
+    if(REXGLUE_PLATFORM_SWITCH)
+        get_filename_component(_pch_header_name "${pch_header}" NAME)
+        target_precompile_headers(${target_name} PRIVATE "<${_pch_header_name}>")
+    else()
+        target_precompile_headers(${target_name} PRIVATE "${pch_header}")
+    endif()
     target_compile_options(${target_name} PRIVATE ${REXGLUE_RECOMP_OPTIONS})
 endfunction()
 
@@ -88,12 +93,16 @@ macro(rexglue_setup_target target_name)
         rexglue_apply_target_settings(${target_name}_recomp)
         rexglue_apply_recomp_settings(${target_name}_recomp
             "${REXGLUE_ENTRYPOINT_INCLUDE_DIR}/wetrecomp_pch.h")
-        add_dependencies(${target_name}_recomp wetrecomp_codegen)
+        if(TARGET wetrecomp_codegen)
+            add_dependencies(${target_name}_recomp wetrecomp_codegen)
+        endif()
         target_link_libraries(${target_name} PRIVATE
             ${target_name}_recomp)
     endif()
     # Also on the host, so a tree that has never run codegen still generates it.
-    add_dependencies(${target_name} wetrecomp_codegen)
+    if(TARGET wetrecomp_codegen)
+        add_dependencies(${target_name} wetrecomp_codegen)
+    endif()
     target_include_directories(${target_name} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -113,15 +122,15 @@ endmacro()
 # Listing the sources as outputs orders any target that compiles them after
 # codegen, including one a project assembles itself rather than taking the
 # library rexglue_setup_target() builds. The stamp comes first: the DEPFILE
-# names it. The headers are outputs too: the precompiled header and the host
-# sources know them only from their depfiles, so ninja would judge those up to
-# date before codegen rewrites the headers, and every source compiled after it
-# would then reject the stale precompiled header.
+# names it.
+#
+# A cross build (Nintendo Switch) has no rexglue it could run: the tool is a
+# host program. There the generated sources must already exist, produced by
+# running codegen with a host SDK.
+if(TARGET rex::rexglue)
 add_custom_command(
     OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/generated/default/codegen.build.stamp"
            ${REXGLUE_ENTRYPOINT_GENERATED_SOURCES}
-           "${CMAKE_CURRENT_SOURCE_DIR}/generated/default/wetrecomp_pch.h"
-           "${CMAKE_CURRENT_SOURCE_DIR}/generated/default/wetrecomp_init.h"
     COMMAND $<TARGET_FILE:rex::rexglue> codegen ${CMAKE_CURRENT_SOURCE_DIR}/wetrecomp_manifest.toml
     DEPFILE "${CMAKE_CURRENT_SOURCE_DIR}/generated/default/codegen.d"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -130,6 +139,11 @@ add_custom_command(
 )
 add_custom_target(wetrecomp_codegen
     DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/generated/default/codegen.build.stamp")
+elseif(NOT REXGLUE_ENTRYPOINT_GENERATED_SOURCES)
+    message(FATAL_ERROR
+        "No generated sources in generated/default and no rexglue to produce them "
+        "(cross build). Run 'rexglue codegen wetrecomp_manifest.toml' with a host SDK first.")
+endif()
 
 # Include DLL module shared library targets if codegen has generated them
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/generated/default/dll_targets.cmake")

@@ -1,24 +1,20 @@
-# WetRecomp
+# WET Recomp - Nintendo Switch
 
 <div align="center">
   <img src="assets/icon.png" alt="WetRecomp" width="480">
 </div>
 
-A static recompilation of [**WET**](https://en.wikipedia.org/wiki/Wet_(video_game)) (2009, Xbox 360, Title ID `425307DB`) to native Windows/Linux x86-64, built on the [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk).
-
-## Status
-
-Fully playable: video, audio, gameplay, achievements, and progression all work.
+A Nintendo Switch build of [**WET**](https://en.wikipedia.org/wiki/Wet_(video_game)) (Xbox 360, Title ID `425307DB`) using ReXGlue and Deko3D.
 
 ## Requirements
 
-- CMake 3.25+, Ninja, Clang/LLVM (clang-cl works too)
-- [extract-xiso](https://github.com/XboxDev/extract-xiso/releases) and your own legally-owned copy of WET:
-  Title ID `425307DB` (disc XA-2498), Media ID `3077A693`, Module hash `9A084828F85F951B`
+- CMake 3.25+, Ninja, and devkitPro's Switch toolchain (`devkitA64`, `libnx`, and `deko3d`)
+- The ReXGlue NX SDK at `../rexglue-nx-source`; run `python tools/switch_setup.py` in that SDK to fetch its Switch dependencies
+- [extract-xiso](https://github.com/XboxDev/extract-xiso/releases) and your own copy of WET
 
 ## Game data
 
-Extract the Xbox 360 ISO with `extract-xiso.exe -x WET.iso`, then copy the contents into `assets/` (gitignored):
+Extract your Xbox 360 ISO with `extract-xiso.exe -x WET.iso`, then copy the game data into `assets/` (gitignored):
 
 ```
 assets/
@@ -31,37 +27,18 @@ assets/
 
 ## Build
 
-```bash
-git clone --recurse-submodules <repo-url>
-```
-
-The ReXGlue SDK is built from the `thirdparty/rexglue-sdk` submodule; no prebuilt SDK is needed.
-
 ```powershell
-cmake --preset win-amd64-relwithdebinfo
-cmake --build out\build\win-amd64-relwithdebinfo
+cmake --preset switch-release
+cmake --build --preset switch-release --parallel 2
 ```
 
-```bash
-cmake --preset linux-amd64-relwithdebinfo
-cmake --build out/build/linux-amd64-relwithdebinfo
-```
-
-## Run
-
-```powershell
-cd out\build\win-amd64-relwithdebinfo
-.\wetrecomp.exe
-```
-
-Logs land in `out\build\<preset>\logs\*.log`.
+The NRO is `build\switch\wetrecomp.nro`. Copy it and `assets\` to the same folder on the SD card, for example `sdmc:/switch/wetrecomp/`.
 
 ## Configuration
 
-`settings/hardware.toml` (rendering/perf, including `wet_gpu_wait_mode` for GPU-wait CPU usage and `user_language` for the game language: 1 English, 3 German, 4 French, 5 Spanish, 6 Italian) and `settings/mapping.toml` (input) load automatically. CLI flags and `REX_*` env vars override them. See [`settings/README.md`](settings/README.md) for the reference, [`settings/faq.md`](settings/faq.md) for every graphics option (including the experimental `graphics_backend = "d3d11"`), [`settings/texture-replacement.md`](settings/texture-replacement.md) for HD texture packs and [`settings/gpu-traces.md`](settings/gpu-traces.md) for GPU frame traces.
+`settings/hardware.toml` and `settings/mapping.toml` are loaded at startup. The WET options include language, frame-rate, visual-effect, and GPU-wait settings; see [`settings/README.md`](settings/README.md).
 
 ## Credits
 
-- [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk)
+- ReXGlue NX SDK
 - [extract-xiso](https://github.com/XboxDev/extract-xiso)
-- [xenia](https://github.com/xenia-project/xenia) / [xenia-canary](https://github.com/xenia-canary/xenia-canary)

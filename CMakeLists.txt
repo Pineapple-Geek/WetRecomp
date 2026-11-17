@@ -1,69 +1,63 @@
-# wetrecomp - ReXGlue Recompiled Project
-#
-# SDK boilerplate lives in generated/rexglue.cmake.
-
 cmake_minimum_required(VERSION 3.25)
-project(wetrecomp LANGUAGES C CXX)
+
+project(wetrecomp VERSION 0.1.0 LANGUAGES C CXX)
+
+if(NOT REXGLUE_PLATFORM_SWITCH)
+    message(FATAL_ERROR "Configure this project with the ReXGlue Nintendo Switch toolchain.")
+endif()
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Fix git symlinks on Windows (libmspack in SDK uses symlinks)
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/fix_symlinks.cmake)
+set(REXSDK_DIR
+    "${CMAKE_CURRENT_SOURCE_DIR}/../rexglue-nx-source"
+    CACHE PATH "Path to the ReXGlue Nintendo Switch SDK"
+)
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/build_optimizations.cmake)
+set(REXGLUE_USE_D3D12 OFF CACHE BOOL "" FORCE)
+set(REXGLUE_USE_VULKAN OFF CACHE BOOL "" FORCE)
+set(REXGLUE_SWITCH_DEKO3D ON CACHE BOOL "" FORCE)
+set(REXGLUE_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(REXGLUE_ENABLE_TRACY OFF CACHE BOOL "" FORCE)
+set(REXGLUE_ENABLE_PERF_COUNTERS OFF CACHE BOOL "" FORCE)
+set(REXGLUE_ENABLE_FIDELITYFX OFF CACHE BOOL "" FORCE)
+set(SPDLOG_NO_TZ_OFFSET ON CACHE BOOL "" FORCE)
 
-# Build ReXGlue SDK from source (git submodule)
-set(REXSDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/rexglue-sdk" CACHE PATH "Path to rexglue-sdk source tree" FORCE)
+include("${CMAKE_CURRENT_SOURCE_DIR}/generated/rexglue.cmake")
 
-# Enable both graphics backends
-if(WIN32)
-    set(REXGLUE_USE_D3D12 ON CACHE BOOL "Enable D3D12 graphics backend")
-    set(REXGLUE_USE_D3D11 ON CACHE BOOL "Enable D3D11 graphics backend [experimental]")
-endif()
-set(REXGLUE_USE_VULKAN ON CACHE BOOL "Enable Vulkan graphics backend")
-
-include(generated/rexglue.cmake)
-
-# Sources
-set(WETRECOMP_SOURCES
+add_executable(wetrecomp
     src/main.cpp
     src/game_patches.cpp
-    src/render/display_refresh.cpp
-    src/render/graphics_backend.cpp
     src/render/gpu_wait_hook.cpp
-    src/render/native_memory_hook.cpp
     src/platform/language_hook.cpp
     src/mod/mouse_look/mouse_look.cpp
     src/mod/mouse_look/hook.cpp
 )
 
-# Windows resources (icon)
-if(WIN32)
-    list(APPEND WETRECOMP_SOURCES
-        src/wetrecomp.rc
+rexglue_setup_target(wetrecomp)
+
+target_compile_definitions(wetrecomp PRIVATE
+    _DEFAULT_SOURCE=1
+    _GNU_SOURCE=1
+    _POSIX_C_SOURCE=200809L
+    SPDLOG_NO_TZ_OFFSET
+)
+
+if(TARGET wetrecomp_recomp)
+    target_compile_definitions(wetrecomp_recomp PRIVATE
+        _DEFAULT_SOURCE=1
+        _GNU_SOURCE=1
+        _POSIX_C_SOURCE=200809L
+        SPDLOG_NO_TZ_OFFSET
     )
 endif()
 
-if(WIN32)
-    add_executable(wetrecomp WIN32 ${WETRECOMP_SOURCES})
-else()
-    add_executable(wetrecomp ${WETRECOMP_SOURCES})
-endif()
+rexglue_switch_add_deko3d(wetrecomp)
 
-# GPU_PLUGINS xenos required for xenos rendering; without it rexgpu-xenosd.dll
-# isn't staged next to the exe and the runtime fails to find the GPU plugin.
-rexglue_setup_target(wetrecomp GPU_PLUGINS xenos)
-
-# SDL looks for this file (name set by settings/mapping.toml's
-# hid_mappings_file) next to the exe at startup to fill in gamepads it
-# doesn't already recognize. Sourced from
-# https://github.com/mdqinc/SDL_GameControllerDB, see settings/README.md.
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/settings/gamecontrollerdb.txt")
-    add_custom_command(TARGET wetrecomp POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${CMAKE_CURRENT_SOURCE_DIR}/settings/gamecontrollerdb.txt"
-                "$<TARGET_FILE_DIR:wetrecomp>/gamecontrollerdb.txt"
-        COMMENT "Copying gamecontrollerdb.txt next to wetrecomp.exe")
-endif()
+rexglue_switch_add_nro(
+    wetrecomp
+    NAME "WET (X360 Recomp)"
+    AUTHOR "PineApple-Geek"
+    VERSION "0.1.0"
+)

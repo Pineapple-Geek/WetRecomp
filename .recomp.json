@@ -6,9 +6,7 @@
     "toolchain": "ReXGlue SDK",
     "status": "playable",
     "targets": [
-        "Windows",
-        "Linux",
-        "macOS"
+        "Nintendo Switch"
     ],
     "maintainers": [
         {
@@ -16,5 +14,5 @@
             "link": "https://github.com/nikolaygorb"
         }
     ],
-    "approach": "Static recompilation of the PowerPC code to x86-64, Direct3D 12 / Vulkan renderer"
+    "approach": "Static recompilation of the Xbox 360 PowerPC code to Nintendo Switch ARM64 with Deko3D"
 }

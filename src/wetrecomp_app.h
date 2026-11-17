@@ -15,8 +15,6 @@
 #include "debug_tools.h"
 #include "game_cvars.h"
 #include "mod/mouse_look/mouse_look.h"
-#include "render/display_refresh.h"
-#include "render/graphics_backend.h"
 #include "utils.h"
 
 #ifdef REXGLUE_ENABLE_PERF_COUNTERS
@@ -33,12 +31,6 @@ public:
   {
     return std::unique_ptr<WetrecompApp>(new WetrecompApp(ctx, "wetrecomp",
                                                           PPCImageConfig));
-  }
-
-  void OnPreSetup(rex::RuntimeConfig &config) override
-  {
-    display_refresh::MatchDisplayRefreshRate();
-    graphics_backend::LoadGpuPlugin(config);
   }
 
   void OnPostSetup() override
