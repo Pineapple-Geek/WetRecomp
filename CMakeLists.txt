@@ -14,10 +14,16 @@ set(REXSDK_DIR
     "${CMAKE_CURRENT_SOURCE_DIR}/../rexglue-nx-source"
     CACHE PATH "Path to the ReXGlue Nintendo Switch SDK"
 )
+if(NOT REXGLUE_SWITCH_NVK_SDK)
+    set(REXGLUE_SWITCH_NVK_SDK
+        "${CMAKE_CURRENT_SOURCE_DIR}/../mesa-horizon-sdk/opt/devkitpro/portlibs/switch"
+        CACHE PATH "Path to the Mesa Horizon SDK portlibs/switch directory" FORCE
+    )
+endif()
 
 set(REXGLUE_USE_D3D12 OFF CACHE BOOL "" FORCE)
-set(REXGLUE_USE_VULKAN OFF CACHE BOOL "" FORCE)
-set(REXGLUE_SWITCH_DEKO3D ON CACHE BOOL "" FORCE)
+set(REXGLUE_USE_VULKAN ON CACHE BOOL "" FORCE)
+set(REXGLUE_SWITCH_DEKO3D OFF CACHE BOOL "" FORCE)
 set(REXGLUE_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(REXGLUE_ENABLE_TRACY OFF CACHE BOOL "" FORCE)
 set(REXGLUE_ENABLE_PERF_COUNTERS OFF CACHE BOOL "" FORCE)
@@ -35,7 +41,7 @@ add_executable(wetrecomp
     src/mod/mouse_look/hook.cpp
 )
 
-rexglue_setup_target(wetrecomp)
+rexglue_setup_target(wetrecomp GPU_PLUGINS xenos)
 
 target_compile_definitions(wetrecomp PRIVATE
     _DEFAULT_SOURCE=1
@@ -53,11 +59,10 @@ if(TARGET wetrecomp_recomp)
     )
 endif()
 
-rexglue_switch_add_deko3d(wetrecomp)
-
 rexglue_switch_add_nro(
     wetrecomp
     NAME "WET (X360 Recomp)"
     AUTHOR "PineApple-Geek"
-    VERSION "0.1.0"
+    VERSION "1.0"
+    ICON "${CMAKE_CURRENT_SOURCE_DIR}/assets/icon.png"
 )

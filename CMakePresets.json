@@ -11,7 +11,10 @@
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_TOOLCHAIN_FILE": "$env{DEVKITPRO}/cmake/Switch.cmake",
                 "REXGLUE_PLATFORM_SWITCH": "ON",
-                "REXGLUE_SWITCH_DEKO3D": "ON"
+                "REXGLUE_USE_VULKAN": "ON",
+                "REXGLUE_SWITCH_DEKO3D": "OFF",
+                "ENABLE_PCH": "OFF",
+                "REXGLUE_SWITCH_NVK_SDK": "${sourceDir}/../mesa-horizon-sdk/opt/devkitpro/portlibs/switch"
             }
         }
     ],
